@@ -389,20 +389,20 @@ void DFRobot_IIC_Serial::writeFIFO(void *pBuf, size_t size){
 void DFRobot_IIC_Serial::test(){
   uint8_t val = 0;
   for(uint8_t addr = 0x04;addr < 0x0E; addr ++){
-	  Serial.print(addr);
-	  Serial.print(": ");
-	  readReg(addr, &val, 1);
-	  Serial.println(val, BIN);
+      Serial.print(addr);
+      Serial.print(": ");
+      readReg(addr, &val, 1);
+      Serial.println(val, BIN);
   }
   subSerialPageSwitch(page1);
   for(uint8_t addr = 0x04; addr < 0x09; addr ++){
-	  Serial.print(addr);
-	  Serial.print(": ");
-	  readReg(addr, &val, 1);
-	  Serial.println(val, BIN);
+      Serial.print(addr);
+      Serial.print(": ");
+      readReg(addr, &val, 1);
+      Serial.println(val, BIN);
   }
   subSerialPageSwitch(page0);
-    uint8_t channl = subSerialChnnlSwitch(SUBUART_CHANNEL_1);
+  uint8_t channl = subSerialChnnlSwitch(SUBUART_CHANNEL_1);
   readReg(REG_WK2132_GIER, &val, 1);
   Serial.print("全局中断寄存器REG_WK2132_GIER: ");
   Serial.println(val, HEX);
