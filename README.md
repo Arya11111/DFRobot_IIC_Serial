@@ -1,7 +1,7 @@
 # DFRobot_IIC_Serial
 这是一款IIC转双串口的UART模块，IIC最高速率为1Mbps。每个子串口具备收/发独立的256字节FIFO硬件缓存，可以满足用户大量数据传输的场景。<br>
-每个子串口的波特率，字长，校验格式可以独特设置，最高可以提供2Mbps的通信速率，支持4个IIC地址，一块主控上最多并联4个模块，一次最多扩展8个硬串口。<br>
-此外子串口还可被配置为IrDA红外收发模式，再此模式下，直接接红外接收或红外发射头即可实现红外通信。<br>
+每个子串口的波特率，字长，校验格式可独立设置，最高提供2Mbps的通信速率，支持4个IIC地址，一块主控上最多并联4个模块，一次最多扩展8个硬串口。<br>
+此外子串口还可被配置为IrDA红外收发模式，在此模式下，直接连接红外接收或红外发射头即可实现红外通信。<br>
 
 这里需要显示拍照图片，可以一张图片，可以多张图片（不要用SVG图）
 
@@ -62,7 +62,7 @@ DFRobot_IIC_Serial(TwoWire &wire = Wire, uint8_t subUartChannel = SUBUART_CHANNE
  * @brief 初始化函数，设置子串口的波特率
  * @param baud 串口波特率
  */
-void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal);};
+void begin(long unsigned baud);
 /**
  * @brief 初始化函数，设置子串口的波特率，数据格式
  * @param baud 串口波特率
@@ -70,8 +70,9 @@ void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal)
  * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
  * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
  */
-void begin(long unsigned baud, uint8_t format){begin(baud, format, eNormalMode, eNormal);};
- /**
+void begin(long unsigned baud, uint8_t format);
+
+/**
  * @brief 初始化函数，设置子串口的波特率，数据格式，通信模式
  * @param baud 串口波特率
  * @param format 子串口数据格式，可填IIC_SERIAL_8N1、IIC_SERIAL_8N2、IIC_SERIAL_8Z1
@@ -79,8 +80,9 @@ void begin(long unsigned baud, uint8_t format){begin(baud, format, eNormalMode, 
  * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
  * @param mode 自串口通信模式，可设置为红外模式（1）或普通模式（0），可填eCommunicationMode_t的所有枚举值，或0或1
  */
-void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode){begin(baud, format, mode, eNormal);};
-void begin(long unsigned baud, uint8_t format, uint8_t mode){begin(baud, format, mode, eNormal);};
+void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode);
+void begin(long unsigned baud, uint8_t format, uint8_t mode);
+
 /**
  * @brief 初始化函数，设置子串口的波特率，数据格式，通信模式，和Line-Break输出
  * @param baud 串口波特率
@@ -97,11 +99,13 @@ void begin(long unsigned baud, uint8_t format, uint8_t mode, uint8_t opt);
  * @brief 结束通信，并复位串口
  */
 void end();
+
 /**
  * @brief 读取接收FIFO缓存中数据的字节数
  * @return 返回接收FIFO缓存中字节的个数
  */
 virtual int available(void);
+
 /**
  * @brief 从接收FIFO缓存中读取一个字节，该读取不会清除缓存中的数据
  * @return 返回读取的数据
@@ -112,6 +116,7 @@ virtual int peek(void);
  * @return 返回读取的数据
  */
 virtual int read(void);
+
  /**
  * @brief 读FIFO缓存
  * @param pBuf 要读取数据的存放缓存
@@ -119,6 +124,7 @@ virtual int read(void);
  * @return 返回实际读取的长度，返回0表示读取失败
  */
 size_t read(void *pBuf, size_t size);
+
 /**
  * @brief 清空接收FIFO缓存的数据
  */
@@ -128,10 +134,11 @@ virtual void flush(void){}
  * @return 成功返回0，否者返回-1
  */
 virtual size_t write(uint8_t);
-inline size_t write(unsigned long n) { return write((uint8_t)n); }
-inline size_t write(long n) { return write((uint8_t)n); }
-inline size_t write(unsigned int n) { return write((uint8_t)n); }
-inline size_t write(int n) { return write((uint8_t)n); }
+inline size_t write(unsigned long n);
+inline size_t write(long n);
+inline size_t write(unsigned int n);
+inline size_t write(int n);
+
 /**
  * @brief 向发送FIFO缓存中写入数据
  * @param pBuf 要读取数据的存放缓存

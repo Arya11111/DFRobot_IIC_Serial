@@ -374,7 +374,7 @@ protected:
    */
   void setSubSerialConfigReg(uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt);
 
-   /**
+  /**
    * @brief 子串口寄存器页切换
    * @param page 页序号，可填ePageNumber_t的所有枚举值
    */
@@ -438,9 +438,5 @@ private:
   TwoWire *_pWire;
   uint8_t _addr;
   uint8_t _subSerialChannel;
-  uint8_t _rxBufferIndex;
-  //uint8_t _rxBufferTail;
-  uint8_t _txBufferIndex;
-  //uint8_t _txBufferTail;
 };
 #endif

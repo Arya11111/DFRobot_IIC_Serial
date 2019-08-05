@@ -17,12 +17,7 @@ DFRobot_IIC_Serial::DFRobot_IIC_Serial(TwoWire &wire,  uint8_t subUartChannel, u
   _pWire = &wire;
   _addr = addr << 3;
   _subSerialChannel = subUartChannel;
-  _rxBufferIndex = 0;
- // _rxBufferTail = 0;
-  _txBufferIndex = 0;
- // _txBufferTail = 0;
-  //memset(_rxBuffer, 0, sizeof(_rxBuffer));
- // memset(_txBuffer, 0, sizeof(_txBuffer));
+  memset(_rxBuffer, 0, sizeof(_rxBuffer));
 }
 
 DFRobot_IIC_Serial::~DFRobot_IIC_Serial(){
@@ -52,7 +47,7 @@ void DFRobot_IIC_Serial::begin(long unsigned baud, uint8_t format, uint8_t mode,
 }
 
 void DFRobot_IIC_Serial::end(){
-  //复位
+  subSerialGlobalRegEnable(_subSerialChannel, rst);
 }
 
 int DFRobot_IIC_Serial::available(void){
@@ -74,8 +69,6 @@ int DFRobot_IIC_Serial::available(void){
 }
 
 int DFRobot_IIC_Serial::peek(void){
-  
-  return -1;
 }
 
 int DFRobot_IIC_Serial::read(void){
