@@ -96,12 +96,12 @@ void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineB
 void begin(long unsigned baud, uint8_t format, uint8_t mode, uint8_t opt);
 
 /**
- * @brief 结束通信，并复位串口
+ * @brief 清空接收和发送缓存，并进入休眠模式
  */
 void end();
 
 /**
- * @brief 读取接收FIFO缓存中数据的字节数
+ * @brief 读取接收缓存中数据的字节数
  * @return 返回接收FIFO缓存中字节的个数
  */
 virtual int available(void);
@@ -117,16 +117,16 @@ virtual int peek(void);
  */
 virtual int read(void);
 
- /**
- * @brief 读FIFO缓存
- * @param pBuf 要读取数据的存放缓存
- * @param size 要读取数据的长度
+/**
+ * @brief 从接收FIFO中读取指定长度的字符，并将其存入一个数组中。
+ * @param pBuf 用于存储数据的数组
+ * @param size 要读取的字符的长度
  * @return 返回实际读取的长度，返回0表示读取失败
  */
 size_t read(void *pBuf, size_t size);
 
 /**
- * @brief 清空接收FIFO缓存的数据
+ * @brief 等待正在发送的数据发送完成
  */
 virtual void flush(void){}
 /**
@@ -143,7 +143,7 @@ inline size_t write(int n);
  * @brief 向发送FIFO缓存中写入数据
  * @param pBuf 要读取数据的存放缓存
  * @param size 要读取数据的长度
- * @return 成功返回0，否者返回-1
+ * @return 输出的字节数
  */
 size_t write(void *pBuf, size_t size);
 

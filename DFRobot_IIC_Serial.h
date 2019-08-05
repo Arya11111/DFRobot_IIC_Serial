@@ -75,6 +75,18 @@
 #define IIC_SERIAL_8F1    0x0E
 #define IIC_SERIAL_8F2    0x0F
 
+#if !defined(SERIAL_RX_BUFFER_SIZE)
+#if ((RAMEND - RAMSTART) < 1023)
+#define SERIAL_RX_BUFFER_SIZE 16
+#else
+#define SERIAL_RX_BUFFER_SIZE 32
+#endif
+#endif
+#if  (SERIAL_RX_BUFFER_SIZE>256)
+typedef uint16_t rx_buffer_index_t;
+#else
+typedef uint8_t rx_buffer_index_t;
+#endif
 
 #ifdef ARDUINO_ARCH_NRF5
 class DFRobot_IIC_Serial : public _Stream{
@@ -280,11 +292,11 @@ public:
   void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt);
   void begin(long unsigned baud, uint8_t format, uint8_t mode, uint8_t opt);
   /**
-   * @brief 结束通信，并复位串口
+   * @brief 清空接收和发送缓存，并进入休眠模式
    */
   void end();
   /**
-   * @brief 读取接收FIFO缓存中数据的字节数
+   * @brief 读取接收缓存中数据的字节数
    * @return 返回接收FIFO缓存中字节的个数
    */
   virtual int available(void);
@@ -299,16 +311,16 @@ public:
    */
   virtual int read(void);
    /**
-   * @brief 读FIFO缓存
-   * @param pBuf 要读取数据的存放缓存
-   * @param size 要读取数据的长度
+   * @brief 从接收FIFO中读取指定长度的字符，并将其存入一个数组中。
+   * @param pBuf 用于存储数据的数组
+   * @param size 要读取的字符的长度
    * @return 返回实际读取的长度，返回0表示读取失败
    */
   size_t read(void *pBuf, size_t size);
   /**
-   * @brief 清空接收FIFO缓存的数据
+   * @brief 等待正在发送的数据发送完成
    */
-  virtual void flush(void){}
+  virtual void flush(void);
   /**
    * @brief 向发送FIFO缓存中写入一个字节,以下为不同数据类型字节的重载函数
    * @return 成功返回0，否者返回-1
@@ -322,7 +334,7 @@ public:
    * @brief 向发送FIFO缓存中写入数据
    * @param pBuf 要读取数据的存放缓存
    * @param size 要读取数据的长度
-   * @return 成功返回0，否者返回-1
+   * @return 输出的字节数
    */
   size_t write(void *pBuf, size_t size);
   using Print::write; // pull in write(str) and write(buf, size) from Print
@@ -432,7 +444,11 @@ protected:
    * @return 返回实际读取的长度，返回0表示读取失败
    */
   uint8_t readFIFO(void* pBuf, size_t size);
-  
+
+protected:
+  volatile rx_buffer_index_t _rx_buffer_head;
+  volatile rx_buffer_index_t _rx_buffer_tail;
+  unsigned char _tx_buffer[SERIAL_TX_BUFFER_SIZE];
 
 private:
   TwoWire *_pWire;
