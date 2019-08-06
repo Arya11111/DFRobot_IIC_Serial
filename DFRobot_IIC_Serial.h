@@ -95,15 +95,9 @@ class DFRobot_IIC_Serial : public Stream{
 #endif
 public:
   #define FOSC                11059851L //外部晶振频率11.059851MHz
-  #define ERR_OK                0      //无错误
-  #define ERR_PIN              -1      //引脚编号错误
-  #define ERR_DATA_BUS         -1
-  #define ERR_DATA_READ        -2      //数据总线读取失败
-  #define ERR_ADDR             -3      //IIC地址错误
-  #define OBJECT_REGISTER      0x00    //寄存器对象
-  #define OBJECT_FIFO          0x01    //FIFO缓存对象
-  #define FSR_FLAG_ERR         0X01
-  #define IIC_BUFFER_SIZE      32      //IIC一次传输的最大字节数
+  #define OBJECT_REGISTER      0x00     //寄存器对象
+  #define OBJECT_FIFO          0x01     //FIFO缓存对象
+  #define IIC_BUFFER_SIZE      32       //IIC一次传输的最大字节数
   
   typedef enum{
       eNormalMode = 0,
@@ -125,7 +119,6 @@ protected:
      * -------------------------------------------------------------------------
      * |                    addrPre                 |       uart      |   type |
      * -------------------------------------------------------------------------
-     *上电后，ready位默认为1，不可更改
   */
   typedef struct{
       uint8_t  type: 1; /*!< IIC地址的第0位，取值与操作的是寄存器还是FIFO缓存有关，0表示寄存器，1表示FIFO */
@@ -296,25 +289,25 @@ public:
    */
   void end();
   /**
-   * @brief 读取接收缓存中数据的字节数
-   * @return 返回接收FIFO缓存中字节的个数
+   * @brief 获取接收缓冲区的字节数，该接收缓存区最多可保存31+256B的数据
+   * @return 返回接收缓存中的字节个数
    */
   virtual int available(void);
   /**
-   * @brief 从接收FIFO缓存中读取一个字节，该读取不会清除缓存中的数据
+   * @brief 返回1字节的数据，但不会从接收缓存中删除该数据
    * @return 返回读取的数据
    */
   virtual int peek(void);
   /**
-   * @brief 从接收FIFO缓存中读取一个字节，该读取会清除缓存中的数据
+   * @brief 从接收缓存中读取一个字节，该读取会清除缓存中的数据
    * @return 返回读取的数据
    */
   virtual int read(void);
    /**
-   * @brief 从接收FIFO中读取指定长度的字符，并将其存入一个数组中。
+   * @brief 从接收FIFO中读取指定长度的字符，并将其存入一个数组中,该读取不会经过接收缓存。
    * @param pBuf 用于存储数据的数组
    * @param size 要读取的字符的长度
-   * @return 返回实际读取的长度，返回0表示读取失败
+   * @return 返回实际读取的字节数
    */
   size_t read(void *pBuf, size_t size);
   /**
@@ -448,7 +441,8 @@ protected:
 protected:
   volatile rx_buffer_index_t _rx_buffer_head;
   volatile rx_buffer_index_t _rx_buffer_tail;
-  unsigned char _tx_buffer[SERIAL_TX_BUFFER_SIZE];
+  unsigned char _rx_buffer[SERIAL_RX_BUFFER_SIZE];
+
 
 private:
   TwoWire *_pWire;

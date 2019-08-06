@@ -107,12 +107,12 @@ void end();
 virtual int available(void);
 
 /**
- * @brief 从接收FIFO缓存中读取一个字节，该读取不会清除缓存中的数据
+ * @brief 从接收缓存中读取一个字节，该读取不会清除缓存中的数据
  * @return 返回读取的数据
  */
 virtual int peek(void);
 /**
- * @brief 从接收FIFO缓存中读取一个字节，该读取会清除缓存中的数据
+ * @brief 从接收缓存中读取一个字节，该读取会清除缓存中的数据
  * @return 返回读取的数据
  */
 virtual int read(void);

@@ -27,17 +27,16 @@ DFRobot_IIC_Serial::~DFRobot_IIC_Serial(){
 
 void DFRobot_IIC_Serial::begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt){
   _rx_buffer_head = _rx_buffer_tail;
-  _tx_buffer_head = _tx_buffer_tail;
   _pWire->begin();
   uint8_t channel = subSerialChnnlSwitch(SUBUART_CHANNEL_1);
   uint8_t val = 0;
   if(readReg(REG_WK2132_GENA, &val, 1) != 1){
       DBG("READ BYTE SIZE ERROR!");
-      return; //ERR_DATA_READ;
+      return;
   }
   if((val >> 6) != 0x02){
       DBG("");
-      return;// ERR_DATA_BUS;
+      return;
   }
   subSerialChnnlSwitch(channel);
   subSerialConfig(_subSerialChannel);
@@ -69,33 +68,36 @@ void DFRobot_IIC_Serial::end(){
 }
 
 int DFRobot_IIC_Serial::available(void){
-  if(_rx_buffer_head == _rx_buffer_tail){
-      int index;
-      uint8_t val = 0;
-      sFsrReg_t fsr;
-      if(readReg(REG_WK2132_RFCNT, &val, 1) != 1){
-          DBG("READ BYTE SIZE ERROR!");
-          return -1;
-      }
-      index = (int)val;
-      if(index == 0){
-          fsr = readFIFOStateReg();
-          if(fsr.rDat == 1){
-              index = 256;
-          }
-      }
-      if(index > (SERIAL_RX_BUFFER_SIZE - 1)){
-          index = SERIAL_RX_BUFFER_SIZE - 1;//32
-      }
-      if(readFIFO(_rx_buffer, index) != index){
-          return -1;
-      }
-      _rx_buffer_head = index ;//32
+  int index;
+  uint8_t val = 0;
+  sFsrReg_t fsr;
+  if(readReg(REG_WK2132_RFCNT, &val, 1) != 1){
+      DBG("READ BYTE SIZE ERROR!");
+      return 0;
   }
-  return ((unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE;
+  index = (int)val;
+  if(index == 0){
+      fsr = readFIFOStateReg();
+      if(fsr.rDat == 1){
+          index = 256;
+      }
+  }
+  return (index + ((unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE);
 }
 
 int DFRobot_IIC_Serial::peek(void){
+  int num = available() - (((unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE);
+  for(int i = 0; i < num; i++){
+      rx_buffer_index_t j = (rx_buffer_index_t)(_rx_buffer_head + 1) % SERIAL_RX_BUFFER_SIZE;
+      if(j != _rx_buffer_tail){
+          uint8_t val = 0;
+          readReg(REG_WK2132_FDAT, &val, 1);
+          _rx_buffer[_rx_buffer_head] = val;
+          _rx_buffer_head = j;
+      }else{
+          break;
+      }
+  }
   if(_rx_buffer_head == _rx_buffer_tail){
       return -1;
   }
@@ -103,6 +105,20 @@ int DFRobot_IIC_Serial::peek(void){
 }
 
 int DFRobot_IIC_Serial::read(void){
+  int num = available() - ((unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE;
+  //Serial.print("num = ");Serial.println(num);
+  for(int i = 0; i < num; i++){
+      rx_buffer_index_t j = (rx_buffer_index_t)(_rx_buffer_head + 1) % SERIAL_RX_BUFFER_SIZE;
+      if(j != _rx_buffer_tail){
+          uint8_t val = 0;
+          readReg(REG_WK2132_FDAT, &val, 1);
+		  Serial.println(val,HEX);
+          _rx_buffer[_rx_buffer_head] = val;
+          _rx_buffer_head = j;
+      }else{
+          break;
+      }
+  }
   if(_rx_buffer_head == _rx_buffer_tail){
       return -1;
   }
@@ -119,7 +135,7 @@ size_t DFRobot_IIC_Serial::write(uint8_t value){
       return -1;
   }
   writeReg(REG_WK2132_FDAT, &value, 1);
-  return 0;
+  return 1;
 }
 
 size_t DFRobot_IIC_Serial::write(void *pBuf, size_t size){
@@ -129,14 +145,16 @@ size_t DFRobot_IIC_Serial::write(void *pBuf, size_t size){
   }
   uint8_t *_pBuf = (uint8_t *)pBuf;
   sFsrReg_t fsr;
+  uint8_t val = 0;
   fsr = readFIFOStateReg();
   if(fsr.tFull == 1){
       DBG("FIFO full!");
-      return -1;
+      return 0;
   }
   writeFIFO(_pBuf, size);
   return size;
 }
+
 size_t DFRobot_IIC_Serial::read(void *pBuf, size_t size){
   if(pBuf == NULL){
     DBG("pBuf ERROR!! : null pointer");
@@ -147,11 +165,9 @@ size_t DFRobot_IIC_Serial::read(void *pBuf, size_t size){
   fsr = readFIFOStateReg();
   if(fsr.rDat == 0){
       DBG("FIFO Empty!");
-      return -1;
+      return 0;
   }
-  if(size > available()){
-      size = available();
-  }
+  readReg(REG_WK2132_RFCNT, &size, 1);
   readFIFO(_pBuf, size);
   return size;
 }
@@ -193,7 +209,7 @@ void DFRobot_IIC_Serial::subSerialGlobalRegEnable(uint8_t subUartChannel, eGloba
   DBG("reg");DBG(regAddr, HEX);
   if(readReg(regAddr, &val, 1) != 1){
         DBG("READ BYTE SIZE ERROR!");
-      return;//ERR_DATA_READ;
+      return;
   }
   DBG("before:");DBG(val, HEX);
   switch(subUartChannel){
@@ -317,11 +333,7 @@ void DFRobot_IIC_Serial::setSubSerialConfigReg(uint8_t format, eCommunicationMod
 }
 
 uint8_t DFRobot_IIC_Serial::updateAddr(uint8_t pre, uint8_t subUartChannel, uint8_t obj){
-  if(((pre&0x01) == obj) && (((pre >> 1)&0x03)== subUartChannel)){
-      return pre;
-  }
   sIICAddr_t addr ={.type = obj, .uart = subUartChannel, .addrPre = (uint8_t)((int)pre >> 3)};
-  DBG(*(uint8_t *)&addr, HEX);
   return *(uint8_t *)&addr;
 }
 
@@ -429,10 +441,13 @@ void DFRobot_IIC_Serial::test(){
   subSerialPageSwitch(page0);
   uint8_t channl = subSerialChnnlSwitch(SUBUART_CHANNEL_1);
   readReg(REG_WK2132_GIER, &val, 1);
-  Serial.print("全局中断寄存器REG_WK2132_GIER: ");
+  Serial.print("REG_WK2132_GIER: ");
   Serial.println(val, HEX);
   readReg(REG_WK2132_GIFR, &val, 1);
-  Serial.print("全局中断标志寄存器REG_WK2132_GIFR: ");
+  Serial.print("REG_WK2132_GIFR: ");
+  Serial.println(val, HEX);
+  readReg(REG_WK2132_GIFR, &val, 1);
+  Serial.print("REG_WK2132_GIFR: ");
   Serial.println(val, HEX);
   subSerialChnnlSwitch(channl);
 }

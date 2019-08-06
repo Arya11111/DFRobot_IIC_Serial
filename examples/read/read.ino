@@ -11,7 +11,7 @@
  * @get from https://www.dfrobot.com
  * @url https://github.com/DFRobot/DFRobot_IIC_Serial
  */
-#include <DFRobot_IIC_Serial.h>
+#include <DFRobot_WK2132.h>
 /*DFRobot_IIC_Serial构造函数
  *参数&wire 可填TwoWire对象Wire
  *参数subUartChannel 子串口通道号，可填SUBUART_CHANNEL_1（子串口1（默认））或SUBUART_CHANNEL_2（子串口2）
@@ -33,11 +33,12 @@ void setup() {
   iicSerial1.begin(115200);/*子串口1初始化*/
   iicSerial2.begin(115200);/*子串口2初始化*/
   iicSerial1.println("hello, Serial1!");//子串口1发送字符串"hello, Serial1!"
-  iicSerial2.write(123);//子串口2发送数字123
+ // iicSerial2.write(123);//子串口2发送数字123
 }
 
 void loop() {
   char c;
+  iicSerial1.test();
   if(iicSerial1.available()){/*available返回子串口1接收缓存的字节数，无-返回0*/
     while(iicSerial1.available()){
       if(flag == 0){
@@ -55,4 +56,5 @@ void loop() {
       }
       Serial.print(iicSerial2.read());/*读取并打印子串口2接收缓存的数据*/
   }
+  delay(5000);
 }
