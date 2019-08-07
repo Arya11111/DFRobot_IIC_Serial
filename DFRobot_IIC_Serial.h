@@ -3,7 +3,6 @@
  * @brief 定义 DFRobot_IIC_Serial 类的基础结构
  * @n 这是一个IIC转双串口的库，IIC最高速率为1Mbps;
  * @n 每个子通道UART的波特率、字长、校验格式可以独立设置，最高可以提供2Mbps的通信速率;
- * @n 每个子通道可以独立设置工作在IrDA红外通信;
  * @n 每个子通道具备收/发独立的256字节FIFO(先进先出队列缓存)，且FIFO的中断可按用户需求进行编程出发点且具备超时中断功能;
  *
  * @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
@@ -63,7 +62,7 @@
 #define SUBUART_CHANNEL_2    0x01    //子串口通道2
 #define SUBUART_CHANNEL_ALL  0x11    //所有子通道
 
-//数据格式:N表示无校验位，Z表示0校验，O表示奇校验, E表示偶校验，F表示偶校验。前面一个数字表示发送数据的位数，后面一个数字表示停止位数
+//数据格式:N表示无校验位，Z表示0校验，O表示奇校验, E表示偶校验，F表示1校验。前面一个数字表示发送数据的位数，后面一个数字表示停止位数
 #define IIC_SERIAL_8N1    0x00
 #define IIC_SERIAL_8N2    0x01
 #define IIC_SERIAL_8Z1    0x08
@@ -101,12 +100,12 @@ public:
   
   typedef enum{
       eNormalMode = 0,
-      eIrDAMode
+      //eIrDAMode
   }eCommunicationMode_t;
   
   typedef enum{
       eNormal = 0,
-      eLineBreak
+      //eLineBreak
   }eLineBreakOutput_t;
 
 protected:
@@ -191,7 +190,7 @@ protected:
       uint8_t lBreak: 1; /*!< 子串口Line-Break输出控制位，0-正常输出，1-Line-Break输出（TX强制输出0） */
       uint8_t rsv : 2; /*!< 保留位 */
   } __attribute__ ((packed)) sLcrReg_t;
-  
+
   /*
    WK2132子串口FIFO状态寄存器FSR:
      * -------------------------------------------------------------------------
@@ -254,7 +253,8 @@ public:
    * @brief 初始化函数，设置子串口的波特率
    * @param baud 串口波特率
    */
-  void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal);};
+  void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal);}
+
   /**
    * @brief 初始化函数，设置子串口的波特率，数据格式
    * @param baud 串口波特率
@@ -262,58 +262,44 @@ public:
    * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
    * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
    */
-  void begin(long unsigned baud, uint8_t format){begin(baud, format, eNormalMode, eNormal);};
-   /**
-   * @brief 初始化函数，设置子串口的波特率，数据格式，通信模式
-   * @param baud 串口波特率
-   * @param format 子串口数据格式，可填IIC_SERIAL_8N1、IIC_SERIAL_8N2、IIC_SERIAL_8Z1
-   * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
-   * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
-   * @param mode 自串口通信模式，可设置为红外模式（1）或普通模式（0），可填eCommunicationMode_t的所有枚举值，或0或1
-   */
-  void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode){begin(baud, format, mode, eNormal);};
-  void begin(long unsigned baud, uint8_t format, uint8_t mode){begin(baud, format, mode, eNormal);};
+  void begin(long unsigned baud, uint8_t format){begin(baud, format, eNormalMode, eNormal);}
+
   /**
-   * @brief 初始化函数，设置子串口的波特率，数据格式，通信模式，和Line-Break输出
-   * @param baud 串口波特率
-   * @param format 子串口数据格式，可填IIC_SERIAL_8N1、IIC_SERIAL_8N2、IIC_SERIAL_8Z1
-   * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
-   * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
-   * @param mode 自串口通信模式，可设置为红外模式（1）或普通模式（0），可填eCommunicationMode_t的所有枚举值，或0或1
-   * @param opt 子串口Line-Break输出控制位，可设置为正常输出（0）和Line-Break输出（1），可填eLineBreakOutput_t的所有枚举值，或0或1
-   */
-  void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt);
-  void begin(long unsigned baud, uint8_t format, uint8_t mode, uint8_t opt);
-  /**
-   * @brief 清空接收和发送缓存，并进入休眠模式
+   * @brief 释放子串口，该操作后，所有子串口寄存器被清空,需再次begin(),才可正常工作
    */
   void end();
+
   /**
-   * @brief 获取接收缓冲区的字节数，该接收缓存区最多可保存31+256B的数据
+   * @brief 获取接收缓冲区的字节数，该字节数是FIFO接收缓存（256B）和自定义_rx_buffer（31B）中总的字节数
    * @return 返回接收缓存中的字节个数
    */
   virtual int available(void);
+
   /**
    * @brief 返回1字节的数据，但不会从接收缓存中删除该数据
    * @return 返回读取的数据
    */
   virtual int peek(void);
+
   /**
    * @brief 从接收缓存中读取一个字节，该读取会清除缓存中的数据
    * @return 返回读取的数据
    */
   virtual int read(void);
-   /**
+
+  /**
    * @brief 从接收FIFO中读取指定长度的字符，并将其存入一个数组中,该读取不会经过接收缓存。
    * @param pBuf 用于存储数据的数组
    * @param size 要读取的字符的长度
    * @return 返回实际读取的字节数
    */
   size_t read(void *pBuf, size_t size);
+
   /**
    * @brief 等待正在发送的数据发送完成
    */
   virtual void flush(void);
+
   /**
    * @brief 向发送FIFO缓存中写入一个字节,以下为不同数据类型字节的重载函数
    * @return 成功返回0，否者返回-1
@@ -323,6 +309,7 @@ public:
   inline size_t write(long n) { return write((uint8_t)n); }
   inline size_t write(unsigned int n) { return write((uint8_t)n); }
   inline size_t write(int n) { return write((uint8_t)n); }
+
   /**
    * @brief 向发送FIFO缓存中写入数据
    * @param pBuf 要读取数据的存放缓存
@@ -336,6 +323,17 @@ public:
   void test();
 
 protected:
+  /**
+   * @brief 初始化函数，设置子串口的波特率，数据格式，通信模式，和Line-Break输出
+   * @param baud 串口波特率
+   * @param format 子串口数据格式，可填IIC_SERIAL_8N1、IIC_SERIAL_8N2、IIC_SERIAL_8Z1
+   * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
+   * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
+   * @param mode 子串口通信模式，可设置串口模式，可填eCommunicationMode_t的所有枚举值
+   * @param opt 子串口Line-Break输出控制位，可设置为正常输出（0）和Line-Break输出（1），可填eLineBreakOutput_t的所有枚举值，或0或1
+   */
+  void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt);
+
   /**
    * @brief 子串口参数配置
    * @param subUartChannel 子串口通道号,可填SUBUART_CHANNEL_1或SUBUART_CHANNEL_2
@@ -399,12 +397,23 @@ protected:
    * @return 返回值为sFsrReg_t结构体对象的值
    */
   sFsrReg_t readFIFOStateReg();
+
   /**
    * @brief 自串口通道切换
    * @param subUartChannel 子串口通道号，可填SUBUART_CHANNEL_1或SUBUART_CHANNEL_2
    * @return 返回被切换的通道
    */
   uint8_t subSerialChnnlSwitch(uint8_t subUartChannel);
+
+  /**
+   * @brief 子串口进入休眠状态
+   */
+  void sleep();
+
+  /**
+   * @brief 子串口从休眠状态唤醒
+   */
+  void wakeup();
 
   /**
    * @brief 写寄存器函数
