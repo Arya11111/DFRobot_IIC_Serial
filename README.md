@@ -61,7 +61,7 @@ DFRobot_IIC_Serial(TwoWire &wire = Wire, uint8_t subUartChannel = SUBUART_CHANNE
  * @brief 初始化函数，设置子串口的波特率
  * @param baud 串口波特率
  */
-void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal);}
+void begin(long unsigned baud);
 
 /**
  * @brief 初始化函数，设置子串口的波特率，数据格式
@@ -70,7 +70,7 @@ void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal)
  * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
  * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
  */
-void begin(long unsigned baud, uint8_t format){begin(baud, format, eNormalMode, eNormal);}
+void begin(long unsigned baud, uint8_t format);
 
 /**
  * @brief 释放子串口，该操作后，所有子串口寄存器被清空,需再次begin(),才可正常工作
@@ -81,19 +81,19 @@ void end();
  * @brief 获取接收缓冲区的字节数，该字节数是FIFO接收缓存（256B）和自定义_rx_buffer（31B）中总的字节数
  * @return 返回接收缓存中的字节个数
  */
-virtual int available(void);
+int available(void);
 
 /**
  * @brief 返回1字节的数据，但不会从接收缓存中删除该数据
  * @return 返回读取的数据
  */
-virtual int peek(void);
+int peek(void);
 
 /**
  * @brief 从接收缓存中读取一个字节，该读取会清除缓存中的数据
  * @return 返回读取的数据
  */
-virtual int read(void);
+int read(void);
 
 /**
  * @brief 从接收FIFO中读取指定长度的字符，并将其存入一个数组中,该读取不会经过接收缓存。
@@ -106,17 +106,17 @@ size_t read(void *pBuf, size_t size);
 /**
  * @brief 等待正在发送的数据发送完成
  */
-virtual void flush(void);
+void flush(void);
 
 /**
  * @brief 向发送FIFO缓存中写入一个字节,以下为不同数据类型字节的重载函数
  * @return 成功返回0，否者返回-1
  */
 virtual size_t write(uint8_t);
-inline size_t write(unsigned long n) { return write((uint8_t)n); }
-inline size_t write(long n) { return write((uint8_t)n); }
-inline size_t write(unsigned int n) { return write((uint8_t)n); }
-inline size_t write(int n) { return write((uint8_t)n); }
+inline size_t write(unsigned long n);
+inline size_t write(long n);
+inline size_t write(unsigned int n);
+inline size_t write(int n);
 
 /**
  * @brief 向发送FIFO缓存中写入数据
@@ -139,7 +139,7 @@ micro:bit        |      √       |              |             |
 
 ## History
 
-- data 2019-7-18
+- date 2019-8-7
 - version V1.0
 
 ## Credits

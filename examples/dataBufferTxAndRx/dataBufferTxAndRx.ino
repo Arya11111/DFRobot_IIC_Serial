@@ -26,6 +26,9 @@
 DFRobot_IIC_Serial iicSerial1(Wire, /*subUartChannel =*/SUBUART_CHANNEL_1, /*addr = */0x0E);//构造子串口1
 //DFRobot_IIC_Serial iicSerial1;//这样定义会使用默认参数， Wire SUBUART_CHANNEL_1 0x0E(默认I2C地址)
 
+char tx_buffer[]="hello, world!";
+char rx_buffer[256];
+
 void setup() {
   Serial.begin(115200);
   /*begin 初始化函数,设置波特率,该波特率需要根据选择的晶振频率设置
@@ -43,13 +46,11 @@ void setup() {
 }
 
 void loop() {
-  char c[]="hello, world!";
-  char a[256];
-  iicSerial1.write(/*pBuf = */c, /*size = */sizeof(c)-1);//子串口发送数组c的数据,一次最大发送256字节
+  iicSerial1.write(/*pBuf = */tx_buffer, /*size = */sizeof(tx_buffer)-1);//子串口发送数组tx_buffer的数据,一次最大发送256字节
   iicSerial1.flush();//等待数据发送结束
-  size_t n = iicSerial1.read(/*pBuf = */a, /*size = */sizeof(a));//该函数会返回实际读取的字节数，并将数据存在数组a中，一次最大读取256字节
+  size_t n = iicSerial1.read(/*pBuf = */rx_buffer, /*size = */sizeof(rx_buffer));//该函数会返回实际读取的字节数，并将数据存在数组a中，一次最大读取256字节
   for(size_t i = 0; i < n; i++){
-     Serial.print(a[i]);
+     Serial.print(rx_buffer[i]);
   }
   Serial.println();
   delay(2000);

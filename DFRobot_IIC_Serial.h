@@ -93,7 +93,9 @@ class DFRobot_IIC_Serial : public _Stream{
 class DFRobot_IIC_Serial : public Stream{
 #endif
 public:
-  #define FOSC                11059851L //外部晶振频率11.059851MHz
+  #define ERR_OK               0
+  #define ERR_REGDATA           -1
+  #define FOSC                 14745600L//外部晶振频率14.7456MHz
   #define OBJECT_REGISTER      0x00     //寄存器对象
   #define OBJECT_FIFO          0x01     //FIFO缓存对象
   #define IIC_BUFFER_SIZE      32       //IIC一次传输的最大字节数
@@ -252,8 +254,9 @@ public:
   /**
    * @brief 初始化函数，设置子串口的波特率
    * @param baud 串口波特率
+   * @return 初始化成功返回0，失败返回其他值
    */
-  void begin(long unsigned baud){begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal);}
+  int begin(long unsigned baud){return begin(baud, IIC_SERIAL_8N1, eNormalMode, eNormal);}
 
   /**
    * @brief 初始化函数，设置子串口的波特率，数据格式
@@ -261,8 +264,9 @@ public:
    * @param format 子串口数据格式，可填IIC_SERIAL_8N1、IIC_SERIAL_8N2、IIC_SERIAL_8Z1
    * @n IIC_SERIAL_8Z2、IIC_SERIAL_8O1、IIC_SERIAL_8O2、IIC_SERIAL_8E1、IIC_SERIAL_8E2
    * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
+   * @return 初始化成功返回0，失败返回其他值
    */
-  void begin(long unsigned baud, uint8_t format){begin(baud, format, eNormalMode, eNormal);}
+  int begin(long unsigned baud, uint8_t format){return begin(baud, format, eNormalMode, eNormal);}
 
   /**
    * @brief 释放子串口，该操作后，所有子串口寄存器被清空,需再次begin(),才可正常工作
@@ -309,14 +313,16 @@ public:
   inline size_t write(long n) { return write((uint8_t)n); }
   inline size_t write(unsigned int n) { return write((uint8_t)n); }
   inline size_t write(int n) { return write((uint8_t)n); }
-
+ 
   /**
    * @brief 向发送FIFO缓存中写入数据
    * @param pBuf 要读取数据的存放缓存
    * @param size 要读取数据的长度
    * @return 输出的字节数
    */
-  size_t write(void *pBuf, size_t size);
+  //virtual size_t write(const uint8_t *pBuf, size_t size);
+  //inline size_t write(void *pBuf, size_t size);
+  //virtual size_t write(void *pBuf, size_t size);
   using Print::write; // pull in write(str) and write(buf, size) from Print
   operator bool() { return true; }
   /*测试用的，测试完了会删掉*/
@@ -331,8 +337,9 @@ protected:
    * @n IIC_SERIAL_8F1、IIC_SERIAL_8F2等参数
    * @param mode 子串口通信模式，可设置串口模式，可填eCommunicationMode_t的所有枚举值
    * @param opt 子串口Line-Break输出控制位，可设置为正常输出（0）和Line-Break输出（1），可填eLineBreakOutput_t的所有枚举值，或0或1
+   * @return 初始化成功返回0，失败返回其他值
    */
-  void begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt);
+  int begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt);
 
   /**
    * @brief 子串口参数配置

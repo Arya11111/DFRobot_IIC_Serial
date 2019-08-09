@@ -25,24 +25,29 @@ DFRobot_IIC_Serial::~DFRobot_IIC_Serial(){
   
 }
 
-void DFRobot_IIC_Serial::begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt){
+int DFRobot_IIC_Serial::begin(long unsigned baud, uint8_t format, eCommunicationMode_t mode, eLineBreakOutput_t opt){
   _rx_buffer_head = _rx_buffer_tail;
   _pWire->begin();
   uint8_t channel = subSerialChnnlSwitch(SUBUART_CHANNEL_1);
-  uint8_t val = 0;
-  if(readReg(REG_WK2132_GENA, &val, 1) != 1){
-      DBG("READ BYTE SIZE ERROR!");
-      return;
-  }
-  if((val >> 6) != 0x02){
-      DBG("");
-      return;
+  uint8_t val = 0, n = 0;
+  while((val >> 6) != 0x02){
+      if(readReg(REG_WK2132_GENA, &val, 1) != 1){
+          DBG("READ BYTE SIZE ERROR!");
+      }
+      DBG(val, HEX);
+      DBG((val >> 6));
+      if(n > 10){
+          DBG("REG_WK2132_GENA ERROR");
+         return ERR_REGDATA;
+      }
+      n++;
   }
   subSerialChnnlSwitch(channel);
   subSerialConfig(_subSerialChannel);
   DBG("OK");
   setSubSerialBaudRate(baud);
   setSubSerialConfigReg(format, mode, opt);
+  return ERR_OK;
 }
 
 void DFRobot_IIC_Serial::end(){
@@ -99,6 +104,7 @@ int DFRobot_IIC_Serial::read(void){
           break;
       }
   }
+  Serial.println("read(void)");
   if(_rx_buffer_head == _rx_buffer_tail){
       return -1;
   }
@@ -114,45 +120,50 @@ size_t DFRobot_IIC_Serial::write(uint8_t value){
       DBG("FIFO full!");
       return -1;
   }
+      //for(int i = 0 ; i < size; i++){
+      //Serial.print(" 0x");
+      //Serial.print(value,HEX);
+  //}
   writeReg(REG_WK2132_FDAT, &value, 1);
   return 1;
 }
 
-size_t DFRobot_IIC_Serial::write(void *pBuf, size_t size){
+// size_t DFRobot_IIC_Serial::write(const uint8_t *pBuf, size_t size){
+  // if(pBuf == NULL){
+    // DBG("pBuf ERROR!! : null pointer");
+    // return 0;
+  // }
+  // Serial.println("111111111111");
+  // uint8_t *_pBuf = (uint8_t *)pBuf;
+  // sFsrReg_t fsr;
+  // uint8_t val = 0;
+  // fsr = readFIFOStateReg();
+  // if(fsr.tFull == 1){
+      // DBG("FIFO full!");
+      // return 0;
+  // }
+  // Serial.println("write(const uint8_t *pBuf, size_t size)");
+  // writeFIFO(_pBuf, size);
+  // return size;
+// }
+
+// inline size_t DFRobot_IIC_Serial::write(void *pBuf, size_t size){
+    // Serial.println("writewritewritewritewrite");
+  
+  // uint8_t *_pBuf = (uint8_t *)pBuf;
+  // while(1);
+  // return write(_pBuf, size);
+// }
+
+size_t DFRobot_IIC_Serial::read(void *pBuf, size_t size){
+    Serial.println("read(void *pBuf, size_t size1)");
   if(pBuf == NULL){
     DBG("pBuf ERROR!! : null pointer");
     return 0;
   }
   uint8_t *_pBuf = (uint8_t *)pBuf;
-  sFsrReg_t fsr;
-  uint8_t val = 0;
-  fsr = readFIFOStateReg();
-  if(fsr.tFull == 1){
-      DBG("FIFO full!");
-      return 0;
-  }
-  writeFIFO(_pBuf, size);
-  return size;
-}
-
-size_t DFRobot_IIC_Serial::read(void *pBuf, size_t size){
-  if(pBuf == NULL){
-    DBG("pBuf ERROR!! : null pointer");
-    return 0;
-  }
-  uint8_t *_pBuf = (uint8_t *)pBuf, val = 0;
-  sFsrReg_t fsr;
-  fsr = readFIFOStateReg();
-  if(fsr.rDat == 0){
-      DBG("FIFO Empty!");
-      return 0;
-  }
-  readReg(REG_WK2132_RFCNT, &val, 1);
-  if(val == 0){
-      size = 256;
-  }else{
-      size = (size_t)val;
-  }
+  size = available() - (((unsigned int)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE);
+  Serial.println(size);
   readFIFO(_pBuf, size);
   return size;
 }
@@ -391,9 +402,10 @@ uint8_t DFRobot_IIC_Serial::readFIFO(void* pBuf, size_t size){
       }
       _pWire->requestFrom(_addr, (uint8_t) num);
       for(size_t i = 0; i < num; i++){
-          _pBuf[i] = _pWire->read();
+          *(_pBuf+i) = _pWire->read();
       }
       left -=num;
+      _pBuf += num;
   }
   return (uint8_t)size;
 }
@@ -406,13 +418,17 @@ void DFRobot_IIC_Serial::writeFIFO(void *pBuf, size_t size){
   uint8_t *_pBuf = (uint8_t *)pBuf;
   size_t left = size;
   while(left){
+      Serial.println(left);
       size = (left > IIC_BUFFER_SIZE) ? IIC_BUFFER_SIZE : left;
       _pWire->beginTransmission(_addr);
       _pWire->write(_pBuf, size);
       if(_pWire->endTransmission() != 0){
           return;
       }
+      delay(50);
+      Serial.println();
       left -= size;
+      _pBuf = _pBuf + size;
   }
 }
 void DFRobot_IIC_Serial::test(){
